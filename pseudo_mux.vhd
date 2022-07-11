@@ -23,9 +23,9 @@ entity pseudo_mux is
     port (
         RESET   : in    std_logic; -- reset input
         CLOCK   : in    std_logic; -- clock input
-        S       : in    std_logic; -- control inputs
+        botao   : in    std_logic; -- control inputs
         Q       : out   std_logic_vector(3 downto 0);  -- data output
-		  clock_out	:	out	std_logic
+		clock_out	:	out	std_logic
     );
 end pseudo_mux;
 
@@ -41,11 +41,13 @@ architecture arch of pseudo_mux is
 
 	type state_type is (S0, S1, S2, S3);
 	signal s_atual, s_prox : state_type;
+    signal last_botao : std_logic   :=  '0'; 
+    signal S    :   std_logic   :=  '0';
    
    begin
 		instancia_clk100Hz :   clock_divider port map (clk_in  =>  CLOCK,  clk_out =>  clk100Hz);
 		clock_out	<=	clk100Hz;
-	process (S, s_atual)
+	process (S, botao, s_atual)
 		begin
 			case s_atual is
 				when S0 =>
@@ -79,7 +81,7 @@ architecture arch of pseudo_mux is
 			end case;
 		end process;
 	
-	process (clk100Hz, RESET)
+	process (clk100Hz, reset)
 		begin
 			if reset = '1' then
 				s_atual <= S0;
@@ -87,4 +89,17 @@ architecture arch of pseudo_mux is
 				s_atual <= s_prox;
 			end if;
 		end process;
+
+    detector_de_borda:process(clk100Hz)
+        begin
+          if(rising_edge(clk100Hz)) then
+            if(botao = '1' and last_botao = '0') then     
+                S <= '1';
+            else
+                S <= '0';
+            end if;
+
+            last_botao <= botao;
+          end if;
+        end process;
 end arch;
