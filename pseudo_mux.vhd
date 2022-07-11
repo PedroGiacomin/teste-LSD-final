@@ -24,16 +24,27 @@ entity pseudo_mux is
         RESET   : in    std_logic; -- reset input
         CLOCK   : in    std_logic; -- clock input
         S       : in    std_logic; -- control inputs
-        Q       : out   std_logic_vector(3 downto 0)  -- data output
+        Q       : out   std_logic_vector(3 downto 0);  -- data output
+		  clock_out	:	out	std_logic
     );
 end pseudo_mux;
 
 architecture arch of pseudo_mux is
+    
+    component clock_divider is
+        port(
+            clk_in	:   in	std_logic;
+            clk_out	:	out std_logic
+        );
+    end component;
+    signal clk100Hz    :   std_logic;   -- Sinal de clock corrigido
+
 	type state_type is (S0, S1, S2, S3);
 	signal s_atual, s_prox : state_type;
    
-begin
-   
+   begin
+		instancia_clk100Hz :   clock_divider port map (clk_in  =>  CLOCK,  clk_out =>  clk100Hz);
+		clock_out	<=	clk100Hz;
 	process (S, s_atual)
 		begin
 			case s_atual is
@@ -68,11 +79,11 @@ begin
 			end case;
 		end process;
 	
-	process (CLOCK, RESET)
+	process (clk100Hz, RESET)
 		begin
 			if reset = '1' then
 				s_atual <= S0;
-			elsif rising_edge(CLOCK) then
+			elsif rising_edge(clk100Hz) then
 				s_atual <= s_prox;
 			end if;
 		end process;
